@@ -3,24 +3,25 @@ package bootstrap
 import (
 	"log"
 
+	_ "github.com/afandimsr/go-gin-api/docs"
+	"github.com/afandimsr/go-gin-api/internal/config"
+	"github.com/afandimsr/go-gin-api/internal/database"
+	"github.com/afandimsr/go-gin-api/internal/delivery/http/handler"
+	"github.com/afandimsr/go-gin-api/internal/delivery/http/middleware"
+	"github.com/afandimsr/go-gin-api/internal/infrastructure/external"
+	userRepo "github.com/afandimsr/go-gin-api/internal/infrastructure/persistent/mysql/repository"
+	"github.com/afandimsr/go-gin-api/internal/pkg/jwt"
+	userUC "github.com/afandimsr/go-gin-api/internal/usecase/user"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	_ "github.com/username/go-gin-api/docs"
-	"github.com/username/go-gin-api/internal/config"
-	"github.com/username/go-gin-api/internal/delivery/http/handler"
-	"github.com/username/go-gin-api/internal/delivery/http/middleware"
-	"github.com/username/go-gin-api/internal/infrastructure/external"
-	userRepo "github.com/username/go-gin-api/internal/infrastructure/persistent/mysql/repository"
-	"github.com/username/go-gin-api/internal/pkg/jwt"
-	userUC "github.com/username/go-gin-api/internal/usecase/user"
 )
 
 func Run() {
 	cfg := config.Load()
 	jwt.SetSecret(cfg.JWTSecret)
 
-	db, err := config.NewMySQL(cfg.DB)
+	db, err := database.NewDatabase(cfg.DB)
 	if err != nil {
 		log.Fatal(err)
 	}

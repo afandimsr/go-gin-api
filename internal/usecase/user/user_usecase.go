@@ -1,9 +1,9 @@
 package user
 
 import (
-	"github.com/username/go-gin-api/internal/domain/apperror"
-	"github.com/username/go-gin-api/internal/domain/user"
-	"github.com/username/go-gin-api/internal/pkg/jwt"
+	"github.com/afandimsr/go-gin-api/internal/domain/apperror"
+	"github.com/afandimsr/go-gin-api/internal/domain/user"
+	"github.com/afandimsr/go-gin-api/internal/pkg/jwt"
 	"golang.org/x/crypto/bcrypt"
 )
 

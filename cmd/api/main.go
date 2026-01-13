@@ -1,6 +1,6 @@
 package main
 
-import "github.com/username/go-gin-api/internal/bootstrap"
+import "github.com/afandimsr/go-gin-api/internal/bootstrap"
 
 // @title           Go Gin API
 // @version         1.0

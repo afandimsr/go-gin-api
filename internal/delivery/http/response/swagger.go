@@ -1,6 +1,6 @@
 package response
 
-import "github.com/username/go-gin-api/internal/domain/user"
+import "github.com/afandimsr/go-gin-api/internal/domain/user"
 
 // Generic success response for swagger
 type SuccessUserResponse struct {

@@ -4,9 +4,9 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/afandimsr/go-gin-api/internal/delivery/http/response"
+	"github.com/afandimsr/go-gin-api/internal/domain/apperror"
 	"github.com/gin-gonic/gin"
-	"github.com/username/go-gin-api/internal/delivery/http/response"
-	"github.com/username/go-gin-api/internal/domain/apperror"
 )
 
 func ErrorHandler() gin.HandlerFunc {

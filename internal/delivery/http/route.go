@@ -1,9 +1,9 @@
 package http
 
 import (
+	"github.com/afandimsr/go-gin-api/internal/delivery/http/handler"
+	"github.com/afandimsr/go-gin-api/internal/delivery/http/middleware"
 	"github.com/gin-gonic/gin"
-	"github.com/username/go-gin-api/internal/delivery/http/handler"
-	"github.com/username/go-gin-api/internal/delivery/http/middleware"
 )
 
 func RegisterRoutes(

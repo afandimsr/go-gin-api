@@ -1,15 +1,16 @@
-package config
+package database
 
 import (
 	"database/sql"
 
+	"github.com/afandimsr/go-gin-api/internal/config"
 	"github.com/go-sql-driver/mysql"
 )
 
-func NewMySQL(cfg DBConfig) (*sql.DB, error) {
+func NewMySQL(cfg config.DBConfig) (*sql.DB, error) {
 	dbCfg := mysql.Config{
 		User:      cfg.User,
-		Passwd:    cfg.Pass,
+		Passwd:    cfg.Password,
 		Net:       "tcp",
 		Addr:      cfg.Host + ":" + cfg.Port,
 		DBName:    cfg.Name,

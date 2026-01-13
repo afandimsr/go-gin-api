@@ -23,14 +23,32 @@ else {
 }
 
 # Construct Database URL
-$DB_USER = $env:DB_USER
-$DB_PASS = $env:DB_PASS
-$DB_HOST = $env:DB_HOST
-$DB_PORT = $env:DB_PORT
-$DB_NAME = $env:DB_NAME
-$APP_ENV = $env:APP_ENV
+if ($env:DATABASE_URL) {
+    $MIGRATE_URL = $env:DATABASE_URL
+}
+else {
+    $DB_DRIVER = $env:DB_DRIVER
+    if ($null -eq $DB_DRIVER) { $DB_DRIVER = "postgres" }
+    
+    $DB_USER = $env:DB_USER
+    $DB_PASS = $env:DB_PASSWORD
+    $DB_HOST = $env:DB_HOST
+    $DB_PORT = $env:DB_PORT
+    $DB_NAME = $env:DB_NAME
 
-$MIGRATE_URL = "mysql://${DB_USER}:${DB_PASS}@tcp(${DB_HOST}:${DB_PORT})/${DB_NAME}"
+    if ($DB_DRIVER -eq "mysql") {
+        $MIGRATE_URL = "mysql://${DB_USER}:${DB_PASS}@tcp(${DB_HOST}:${DB_PORT})/${DB_NAME}"
+    }
+    elseif ($DB_DRIVER -eq "postgres") {
+        $MIGRATE_URL = "postgres://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable"
+    }
+    else {
+        Write-Error "Unsupported DB_DRIVER: $DB_DRIVER. Please use 'mysql' or 'postgres', or set DATABASE_URL in .env"
+        exit 1
+    }
+}
+
+$APP_ENV = $env:APP_ENV
 
 # Safeguard against accidental production rollback
 if ($Action -eq "down" -and $APP_ENV -eq "production" -and -not $ConfirmInput) {
