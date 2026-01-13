@@ -4,11 +4,11 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/afandimsr/go-gin-api/internal/delivery/http/response"
+	"github.com/afandimsr/go-gin-api/internal/domain/apperror"
+	"github.com/afandimsr/go-gin-api/internal/domain/user"
+	uc "github.com/afandimsr/go-gin-api/internal/usecase/user"
 	"github.com/gin-gonic/gin"
-	"github.com/username/go-gin-api/internal/delivery/http/response"
-	"github.com/username/go-gin-api/internal/domain/apperror"
-	"github.com/username/go-gin-api/internal/domain/user"
-	uc "github.com/username/go-gin-api/internal/usecase/user"
 )
 
 type UserHandler struct {

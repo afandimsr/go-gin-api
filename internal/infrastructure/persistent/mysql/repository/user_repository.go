@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/username/go-gin-api/internal/domain/user"
+	"github.com/afandimsr/go-gin-api/internal/domain/user"
 )
 
 type userRepo struct {

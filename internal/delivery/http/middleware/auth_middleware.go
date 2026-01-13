@@ -3,9 +3,9 @@ package middleware
 import (
 	"strings"
 
+	"github.com/afandimsr/go-gin-api/internal/domain/apperror"
+	"github.com/afandimsr/go-gin-api/internal/pkg/jwt"
 	"github.com/gin-gonic/gin"
-	"github.com/username/go-gin-api/internal/domain/apperror"
-	"github.com/username/go-gin-api/internal/pkg/jwt"
 )
 
 func AuthMiddleware() gin.HandlerFunc {

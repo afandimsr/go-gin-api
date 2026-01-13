@@ -4,10 +4,10 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/afandimsr/go-gin-api/internal/domain/user"
+	uc "github.com/afandimsr/go-gin-api/internal/usecase/user"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/username/go-gin-api/internal/domain/user"
-	uc "github.com/username/go-gin-api/internal/usecase/user"
 )
 
 // MockUserRepository is a mock implementation of user.UserRepository
