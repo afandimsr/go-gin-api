@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/afandimsr/go-gin-api/internal/config"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func NewMySQL(cfg config.DBConfig) (*sql.DB, error) {

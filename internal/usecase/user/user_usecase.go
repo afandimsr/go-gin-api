@@ -24,7 +24,7 @@ func (u *Usecase) GetAll(page, limit int) ([]user.User, error) {
 	return u.repo.FindAll(limit, offset)
 }
 
-func (u *Usecase) GetByID(id int64) (user.User, error) {
+func (u *Usecase) GetByID(id string) (user.User, error) {
 	return u.repo.FindByID(id)
 }
 
@@ -49,7 +49,7 @@ func (u *Usecase) Create(newUser user.User) error {
 	return nil
 }
 
-func (u *Usecase) Update(id int64, updatedUser user.User) error {
+func (u *Usecase) Update(id string, updatedUser user.User) error {
 	if updatedUser.Email == "" {
 		return apperror.BadRequest("email is required", nil)
 	}
@@ -78,7 +78,7 @@ func (u *Usecase) Update(id int64, updatedUser user.User) error {
 	return nil
 }
 
-func (u *Usecase) Delete(id int64) error {
+func (u *Usecase) Delete(id string) error {
 	// Check if user exists
 	if _, err := u.repo.FindByID(id); err != nil {
 		return err
@@ -120,7 +120,7 @@ func (u *Usecase) Login(email, password string) (string, error) {
 	}
 
 	// 3. Generate Token
-	token, err := jwt.GenerateToken(existingUser.ID, existingUser.Email)
+	token, err := jwt.GenerateToken(existingUser.ID, existingUser.Email, existingUser.Name, existingUser.Roles)
 	if err != nil {
 		return "", apperror.Internal(err)
 	}

@@ -20,7 +20,7 @@ func (m *MockUserRepository) FindAll(limit, offset int) ([]user.User, error) {
 	return args.Get(0).([]user.User), args.Error(1)
 }
 
-func (m *MockUserRepository) FindByID(id int64) (user.User, error) {
+func (m *MockUserRepository) FindByID(id string) (user.User, error) {
 	args := m.Called(id)
 	return args.Get(0).(user.User), args.Error(1)
 }
@@ -40,7 +40,7 @@ func (m *MockUserRepository) Update(u user.User) error {
 	return args.Error(0)
 }
 
-func (m *MockUserRepository) Delete(id int64) error {
+func (m *MockUserRepository) Delete(id string) error {
 	args := m.Called(id)
 	return args.Error(0)
 }
@@ -49,12 +49,12 @@ func TestGetByID(t *testing.T) {
 	mockRepo := new(MockUserRepository)
 	usecase := uc.New(mockRepo, nil)
 
-	mockUser := user.User{ID: 1, Name: "Test User", Email: "test@example.com"}
+	mockUser := user.User{ID: "ef6d1df7-f85c-426c-9c12-6d58a1fc2633", Name: "Test User", Email: "test@example.com"}
 
 	t.Run("Success", func(t *testing.T) {
-		mockRepo.On("FindByID", int64(1)).Return(mockUser, nil)
+		mockRepo.On("FindByID", "ef6d1df7-f85c-426c-9c12-6d58a1fc2633").Return(mockUser, nil)
 
-		u, err := usecase.GetByID(1)
+		u, err := usecase.GetByID("ef6d1df7-f85c-426c-9c12-6d58a1fc2633")
 
 		assert.NoError(t, err)
 		assert.Equal(t, mockUser.ID, u.ID)
@@ -64,9 +64,9 @@ func TestGetByID(t *testing.T) {
 	})
 
 	t.Run("NotFound", func(t *testing.T) {
-		mockRepo.On("FindByID", int64(2)).Return(user.User{}, errors.New("user not found"))
+		mockRepo.On("FindByID", "412fd1c1-0d29-45dd-9cb7-efcf64390e8b").Return(user.User{}, errors.New("user not found"))
 
-		_, err := usecase.GetByID(2)
+		_, err := usecase.GetByID("412fd1c1-0d29-45dd-9cb7-efcf64390e8b")
 
 		assert.Error(t, err)
 		assert.Equal(t, "user not found", err.Error())

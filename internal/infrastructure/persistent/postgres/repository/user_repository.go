@@ -1,4 +1,4 @@
-package mysql
+package postgres
 
 import (
 	"database/sql"
@@ -16,7 +16,7 @@ func NewUserRepo(db *sql.DB) user.UserRepository {
 }
 
 func (r *userRepo) FindAll(limit, offset int) ([]user.User, error) {
-	rows, err := r.db.Query("SELECT id, name, email FROM users LIMIT ? OFFSET ?", limit, offset)
+	rows, err := r.db.Query("SELECT id, name, email FROM users LIMIT $1 OFFSET $2", limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +33,7 @@ func (r *userRepo) FindAll(limit, offset int) ([]user.User, error) {
 
 func (r *userRepo) FindByID(id string) (user.User, error) {
 	var u user.User
-	err := r.db.QueryRow("SELECT id, name, email, password FROM users WHERE id = ?", id).Scan(&u.ID, &u.Name, &u.Email, &u.Password)
+	err := r.db.QueryRow("SELECT id, name, email, password FROM users WHERE id = $1", id).Scan(&u.ID, &u.Name, &u.Email, &u.Password)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return u, errors.New("user not found")
@@ -45,7 +45,7 @@ func (r *userRepo) FindByID(id string) (user.User, error) {
 
 func (r *userRepo) Save(u user.User) error {
 	_, err := r.db.Exec(
-		"INSERT INTO users(name, email, password) VALUES(?, ?, ?)",
+		"INSERT INTO users(name, email, password) VALUES($1, $2, $3)",
 		u.Name, u.Email, u.Password,
 	)
 	return err
@@ -53,20 +53,29 @@ func (r *userRepo) Save(u user.User) error {
 
 func (r *userRepo) Update(u user.User) error {
 	_, err := r.db.Exec(
-		"UPDATE users SET name = ?, email = ?, password = ? WHERE id = ?",
+		"UPDATE users SET name = $1, email = $2, password = $3 WHERE id = $4",
 		u.Name, u.Email, u.Password, u.ID,
 	)
 	return err
 }
 
 func (r *userRepo) Delete(id string) error {
-	_, err := r.db.Exec("DELETE FROM users WHERE id = ?", id)
+	_, err := r.db.Exec("DELETE FROM users WHERE id = $1", id)
 	return err
 }
 
 func (r *userRepo) FindByEmail(email string) (user.User, error) {
 	var u user.User
-	err := r.db.QueryRow("SELECT id, name, email, password FROM users WHERE email = ?", email).Scan(&u.ID, &u.Name, &u.Email, &u.Password)
+
+	query := `
+		SELECT id, name, email, password, is_active
+		FROM users
+		WHERE email = $1
+	`
+
+	err := r.db.QueryRow(query, email).
+		Scan(&u.ID, &u.Name, &u.Email, &u.Password, &u.IsActive)
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return u, errors.New("user not found")
@@ -78,7 +87,7 @@ func (r *userRepo) FindByEmail(email string) (user.User, error) {
 		SELECT r.name
 		FROM roles r
 		JOIN user_roles ur ON ur.role_id = r.id
-		WHERE ur.user_id = ?
+		WHERE ur.user_id = $1
 	`, u.ID)
 
 	if err != nil {
