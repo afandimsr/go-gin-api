@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/afandimsr/go-gin-api/internal/domain/user"
+	"github.com/google/uuid"
 )
 
 type userRepo struct {
@@ -44,10 +45,24 @@ func (r *userRepo) FindByID(id string) (user.User, error) {
 }
 
 func (r *userRepo) Save(u user.User) error {
+	id := uuid.New().String()
 	_, err := r.db.Exec(
-		"INSERT INTO users(name, email, password) VALUES(?, ?, ?)",
-		u.Name, u.Email, u.Password,
+		"INSERT INTO users(id, name, email, password) VALUES(?, ?, ?, ?)",
+		id, u.Name, u.Email, u.Password,
 	)
+
+	for _, role := range u.Roles {
+		var roleID string
+		err := r.db.QueryRow("SELECT id FROM roles WHERE name = ?", role).Scan(&roleID)
+		if err != nil {
+			return err
+		}
+		_, err = r.db.Exec("INSERT INTO user_roles(user_id, role_id) VALUES(?, ?)", id, roleID)
+		if err != nil {
+			return err
+		}
+	}
+
 	return err
 }
 
