@@ -20,16 +20,13 @@ func RegisterRoutes(
 
 	// user routes
 	users := api.Group("/users")
+	users.Use(middleware.AuthMiddleware(), middleware.AdminOnly())
 	{
-		protected := users.Group("/")
-		protected.Use(middleware.AuthMiddleware())
-		{
-			protected.PUT("/:id", userHandler.UpdateUser)
-			protected.DELETE("/:id", userHandler.DeleteUser)
-			protected.GET("", userHandler.GetUsers)
-			protected.POST("", userHandler.CreateUser)
-			protected.GET("/:id", userHandler.GetUser)
-		}
+		users.PUT("/:id", userHandler.UpdateUser)
+		users.DELETE("/:id", userHandler.DeleteUser)
+		users.GET("", userHandler.GetUsers)
+		users.POST("", userHandler.CreateUser)
+		users.GET("/:id", userHandler.GetUser)
 	}
 }
 
