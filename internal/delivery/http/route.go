@@ -21,15 +21,14 @@ func RegisterRoutes(
 	// user routes
 	users := api.Group("/users")
 	{
-		users.GET("", userHandler.GetUsers)
-		users.POST("", userHandler.CreateUser)
-		users.GET("/:id", userHandler.GetUser)
-
 		protected := users.Group("/")
 		protected.Use(middleware.AuthMiddleware())
 		{
 			protected.PUT("/:id", userHandler.UpdateUser)
 			protected.DELETE("/:id", userHandler.DeleteUser)
+			protected.GET("", userHandler.GetUsers)
+			protected.POST("", userHandler.CreateUser)
+			protected.GET("/:id", userHandler.GetUser)
 		}
 	}
 }

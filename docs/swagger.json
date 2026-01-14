@@ -11,7 +11,7 @@
         "version": "1.0"
     },
     "host": "localhost:8080",
-    "basePath": "/",
+    "basePath": "/api/v1",
     "paths": {
         "/login": {
             "post": {
@@ -347,10 +347,19 @@
                     "type": "string"
                 },
                 "id": {
-                    "type": "integer"
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
                 },
                 "name": {
                     "type": "string"
+                },
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         }

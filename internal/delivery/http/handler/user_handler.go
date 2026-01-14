@@ -51,9 +51,9 @@ func (h *UserHandler) GetUsers(c *gin.Context) {
 // @Failure      500 {object} response.ErrorSwaggerResponse
 // @Router       /users/{id} [get]
 func (h *UserHandler) GetUser(c *gin.Context) {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil {
-		c.Error(apperror.BadRequest("invalid user id", err))
+	id := c.Param("id")
+	if id == "" {
+		c.Error(apperror.BadRequest("invalid user id", nil))
 		return
 	}
 
@@ -107,17 +107,19 @@ func (h *UserHandler) Login(c *gin.Context) {
 	var req user.LoginRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.Error(apperror.BadRequest("invalid request", err))
+		// c.Error(apperror.BadRequest("invalid request", err))
+		response.Error(c, 400, "INVALID_REQUEST", "Invalid request", err.Error())
 		return
 	}
 
 	token, err := h.usecase.Login(req.Email, req.Password)
 	if err != nil {
-		c.Error(err)
+		// c.Error(err)
+		response.Error(c, 400, "INTERNVAL_SERVER_ERROR", "Username/Password tidak valid!", err.Error())
 		return
 	}
 
-	response.Success(c, http.StatusOK, "login success", gin.H{"token": token})
+	response.Success(c, http.StatusOK, "login success", user.LoginResponse{Token: token})
 }
 
 // UpdateUser godoc
@@ -133,9 +135,9 @@ func (h *UserHandler) Login(c *gin.Context) {
 // @Failure      500 {object} response.ErrorSwaggerResponse
 // @Router       /users/{id} [put]
 func (h *UserHandler) UpdateUser(c *gin.Context) {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil {
-		c.Error(apperror.BadRequest("invalid user id", err))
+	id := c.Param("id")
+	if id == "" {
+		c.Error(apperror.BadRequest("invalid user id", nil))
 		return
 	}
 
@@ -164,9 +166,9 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 // @Failure      500 {object} response.ErrorSwaggerResponse
 // @Router       /users/{id} [delete]
 func (h *UserHandler) DeleteUser(c *gin.Context) {
-	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
-	if err != nil {
-		c.Error(apperror.BadRequest("invalid user id", err))
+	id := c.Param("id")
+	if id == "" {
+		c.Error(apperror.BadRequest("invalid user id", nil))
 		return
 	}
 

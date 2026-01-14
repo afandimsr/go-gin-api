@@ -11,7 +11,7 @@ import "github.com/afandimsr/go-gin-api/internal/bootstrap"
 // @contact.email  mohamadafandi71@gmail.com
 
 // @host      localhost:8080
-// @BasePath  /
+// @BasePath  /api/v1
 func main() {
 	bootstrap.Run()
 }

@@ -47,11 +47,11 @@ func Load() *Config {
 
 		DB: DBConfig{
 			Host:     getEnv("DB_HOST", "localhost"),
-			Port:     getEnv("DB_PORT", "3306"),
-			User:     getEnv("DB_USER", "root"),
-			Password: getEnv("DB_PASSWORD", ""),
-			Name:     getEnv("DB_NAME", ""),
-			Driver:   getEnv("DB_DRIVER", "mysql"),
+			Port:     getEnv("DB_PORT", "5432"),
+			User:     getEnv("DB_USER", "postgres"),
+			Password: getEnv("DB_PASSWORD", "postgres"),
+			Name:     getEnv("DB_NAME", "postgres"),
+			Driver:   getEnv("DB_DRIVER", "postgres"),
 			SSLMode:  getEnv("DB_SSL_MODE", ""),
 			MaxOpen:  getEnvInt("DB_MAX_OPEN", 20),
 			MaxIdle:  getEnvInt("DB_MAX_IDLE", 10),

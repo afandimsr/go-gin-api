@@ -14,15 +14,19 @@ func SetSecret(secret string) {
 }
 
 type Claims struct {
-	UserID int64  `json:"user_id"`
-	Email  string `json:"email"`
+	UserID string   `json:"user_id"`
+	Email  string   `json:"email"`
+	Name   string   `json:"name,omitempty"`
+	Roles  []string `json:"roles,omitempty"`
 	jwt.RegisteredClaims
 }
 
-func GenerateToken(userID int64, email string) (string, error) {
+func GenerateToken(userID string, email string, name string, roles []string) (string, error) {
 	claims := &Claims{
 		UserID: userID,
 		Email:  email,
+		Name:   name,
+		Roles:  roles,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

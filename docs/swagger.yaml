@@ -1,4 +1,4 @@
-basePath: /
+basePath: /api/v1
 definitions:
   response.ErrorSwaggerResponse:
     properties:
@@ -50,9 +50,15 @@ definitions:
       email:
         type: string
       id:
-        type: integer
+        type: string
+      is_active:
+        type: boolean
       name:
         type: string
+      roles:
+        items:
+          type: string
+        type: array
     type: object
 host: localhost:8080
 info:
