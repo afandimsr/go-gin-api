@@ -72,6 +72,23 @@ func (r *userRepo) Update(u user.User) error {
 		"UPDATE users SET name = $1, email = $2, password = $3 WHERE id = $4",
 		u.Name, u.Email, u.Password, u.ID,
 	)
+
+	// Clear existing roles
+	_, err = r.db.Exec("DELETE FROM user_roles WHERE user_id = $1", u.ID)
+
+	// Update roles
+	for _, role := range u.Roles {
+		var roleID string
+		err := r.db.QueryRow("SELECT id FROM roles WHERE name = $1", role).Scan(&roleID)
+		if err != nil {
+			return err
+		}
+		_, err = r.db.Exec("INSERT INTO user_roles(user_id, role_id) VALUES($1, $2)", u.ID, roleID)
+		if err != nil {
+			return err
+		}
+	}
+
 	return err
 }
 
