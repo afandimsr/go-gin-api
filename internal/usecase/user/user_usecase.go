@@ -1,6 +1,8 @@
 package user
 
 import (
+	"strings"
+
 	"github.com/afandimsr/go-gin-api/internal/domain/apperror"
 	"github.com/afandimsr/go-gin-api/internal/domain/user"
 	"github.com/afandimsr/go-gin-api/internal/pkg/jwt"
@@ -32,8 +34,10 @@ func (u *Usecase) Create(newUser user.User) error {
 	if newUser.Email == "" {
 		return apperror.BadRequest("email is required", nil)
 	}
+
+	defaultPassord := strings.Split(newUser.Email, "@")[0] + "123"
 	if newUser.Password == "" {
-		return apperror.BadRequest("password is required", nil)
+		newUser.Password = defaultPassord
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newUser.Password), bcrypt.DefaultCost)
@@ -62,6 +66,7 @@ func (u *Usecase) Update(id string, updatedUser user.User) error {
 
 	existingUser.Name = updatedUser.Name
 	existingUser.Email = updatedUser.Email
+	existingUser.Roles = updatedUser.Roles
 
 	if updatedUser.Password != "" {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(updatedUser.Password), bcrypt.DefaultCost)

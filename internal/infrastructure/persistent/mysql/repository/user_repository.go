@@ -17,7 +17,7 @@ func NewUserRepo(db *sql.DB) user.UserRepository {
 }
 
 func (r *userRepo) FindAll(limit, offset int) ([]user.User, error) {
-	rows, err := r.db.Query("SELECT id, name, email FROM users LIMIT ? OFFSET ?", limit, offset)
+	rows, err := r.db.Query("SELECT id, name, email, is_active FROM users LIMIT ? OFFSET ?", limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -26,7 +26,29 @@ func (r *userRepo) FindAll(limit, offset int) ([]user.User, error) {
 	var users []user.User
 	for rows.Next() {
 		var u user.User
-		rows.Scan(&u.ID, &u.Name, &u.Email)
+		rows.Scan(&u.ID, &u.Name, &u.Email, &u.IsActive)
+		//fetch roles for user
+		roleRows, err := r.db.Query(`
+			SELECT r.name
+			FROM roles r
+			JOIN user_roles ur ON ur.role_id = r.id
+			WHERE ur.user_id = ?
+		`, u.ID)
+		if err != nil {
+			return nil, err
+		}
+		defer roleRows.Close()
+
+		var roles []string
+		for roleRows.Next() {
+			var role string
+			if err := roleRows.Scan(&role); err != nil {
+				return nil, err
+			}
+			roles = append(roles, role)
+		}
+
+		u.Roles = roles
 		users = append(users, u)
 	}
 	return users, nil
@@ -67,10 +89,30 @@ func (r *userRepo) Save(u user.User) error {
 }
 
 func (r *userRepo) Update(u user.User) error {
+
 	_, err := r.db.Exec(
 		"UPDATE users SET name = ?, email = ?, password = ? WHERE id = ?",
 		u.Name, u.Email, u.Password, u.ID,
 	)
+
+	// Update roles
+	_, err = r.db.Exec("DELETE FROM user_roles WHERE user_id = ?", u.ID)
+	if err != nil {
+		return err
+	}
+
+	for _, role := range u.Roles {
+		var roleID string
+		err := r.db.QueryRow("SELECT id FROM roles WHERE name = ?", role).Scan(&roleID)
+		if err != nil {
+			return err
+		}
+		_, err = r.db.Exec("INSERT INTO user_roles(user_id, role_id) VALUES(?, ?)", u.ID, roleID)
+		if err != nil {
+			return err
+		}
+	}
+
 	return err
 }
 
