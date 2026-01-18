@@ -1,5 +1,13 @@
 basePath: /api/v1
 definitions:
+  request.ChangePasswordRequest:
+    properties:
+      new_password:
+        minLength: 8
+        type: string
+    required:
+    - new_password
+    type: object
   response.ErrorSwaggerResponse:
     properties:
       errors:
@@ -237,6 +245,44 @@ paths:
           schema:
             $ref: '#/definitions/response.ErrorSwaggerResponse'
       summary: Update user
+      tags:
+      - Users
+  /users/{id}/change-password:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Change password payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/request.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.SuccessSingleUserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorSwaggerResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorSwaggerResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorSwaggerResponse'
+      summary: Change user password
       tags:
       - Users
 swagger: "2.0"

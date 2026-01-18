@@ -277,9 +277,79 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/users/{id}/change-password": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Change user password",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Change password payload",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.ChangePasswordRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.SuccessSingleUserResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorSwaggerResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorSwaggerResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorSwaggerResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "request.ChangePasswordRequest": {
+            "type": "object",
+            "required": [
+                "new_password"
+            ],
+            "properties": {
+                "new_password": {
+                    "type": "string",
+                    "minLength": 8
+                }
+            }
+        },
         "response.ErrorSwaggerResponse": {
             "type": "object",
             "properties": {

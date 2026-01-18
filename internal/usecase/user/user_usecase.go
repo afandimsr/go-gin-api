@@ -1,10 +1,13 @@
 package user
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/afandimsr/go-gin-api/internal/domain/apperror"
 	"github.com/afandimsr/go-gin-api/internal/domain/user"
+	"github.com/afandimsr/go-gin-api/internal/domain/valueobject"
+	pw "github.com/afandimsr/go-gin-api/internal/domain/valueobject"
 	"github.com/afandimsr/go-gin-api/internal/pkg/jwt"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -27,7 +30,19 @@ func (u *Usecase) GetAll(page, limit int) ([]user.User, error) {
 }
 
 func (u *Usecase) GetByID(id string) (user.User, error) {
-	return u.repo.FindByID(id)
+	availableUser, err := u.repo.FindByID(id)
+	if err != nil {
+		if errors.Is(err, user.ErrUserNotFound) {
+			return user.User{}, apperror.NotFound(
+				"User tidak ditemukan",
+				err,
+			).WithCode(apperror.UserNotFound)
+		}
+
+		return user.User{}, apperror.Internal(err)
+	}
+
+	return availableUser, nil
 }
 
 func (u *Usecase) Create(newUser user.User) error {
@@ -61,7 +76,14 @@ func (u *Usecase) Update(id string, updatedUser user.User) error {
 	// Check if user exists
 	existingUser, err := u.repo.FindByID(id)
 	if err != nil {
-		return err
+		if errors.Is(err, user.ErrUserNotFound) {
+			return apperror.NotFound(
+				"User tidak ditemukan",
+				err,
+			).WithCode(apperror.UserNotFound)
+		}
+
+		return apperror.Internal(err)
 	}
 
 	existingUser.Name = updatedUser.Name
@@ -86,7 +108,14 @@ func (u *Usecase) Update(id string, updatedUser user.User) error {
 func (u *Usecase) Delete(id string) error {
 	// Check if user exists
 	if _, err := u.repo.FindByID(id); err != nil {
-		return err
+		if errors.Is(err, user.ErrUserNotFound) {
+			return apperror.NotFound(
+				"User tidak ditemukan",
+				err,
+			).WithCode(apperror.UserNotFound)
+		}
+
+		return apperror.Internal(err)
 	}
 
 	if err := u.repo.Delete(id); err != nil {
@@ -100,7 +129,14 @@ func (u *Usecase) Login(email, password string) (string, error) {
 	// 1. Find user by email
 	existingUser, err := u.repo.FindByEmail(email)
 	if err != nil {
-		return "", apperror.Unauthorized("invalid credentials", nil)
+		if errors.Is(err, user.ErrUserNotFound) {
+			return "", apperror.Unauthorized(
+				"Username/Password tidak valid!",
+				err,
+			).WithCode(apperror.InvalidCredentials)
+		}
+
+		return "", apperror.Internal(err)
 	}
 
 	// 2. Authenticate
@@ -120,7 +156,7 @@ func (u *Usecase) Login(email, password string) (string, error) {
 	// We can assume priority: External > Local.
 	if !authenticated {
 		if err := bcrypt.CompareHashAndPassword([]byte(existingUser.Password), []byte(password)); err != nil {
-			return "", apperror.Unauthorized("invalid credentials", nil)
+			return "", apperror.Unauthorized("Username/Password tidak valid!", nil).WithCode(apperror.InvalidCredentials)
 		}
 	}
 
@@ -131,4 +167,51 @@ func (u *Usecase) Login(email, password string) (string, error) {
 	}
 
 	return token, nil
+}
+
+// ChangePassword changes the password of a user
+func (u *Usecase) ChangePassword(id string, newPassword string) error {
+	// Add validation password
+	pw, err := pw.Password(newPassword)
+
+	if err != nil {
+		switch err {
+		case valueobject.ErrPasswordTooShort:
+			return apperror.Validation(err).
+				WithCode(apperror.PasswordTooShort)
+
+		case valueobject.ErrPasswordNoUpper,
+			valueobject.ErrPasswordNoLower,
+			valueobject.ErrPasswordNoDigit,
+			valueobject.ErrPasswordNoSpecial:
+			return apperror.Validation(err).
+				WithCode(apperror.PasswordWeak)
+		}
+	}
+
+	// Check if user exists
+	if _, err := u.repo.FindByID(id); err != nil {
+		if errors.Is(err, user.ErrUserNotFound) {
+			return apperror.NotFound(
+				"User tidak ditemukan",
+				err,
+			).WithCode(apperror.UserNotFound)
+		}
+
+		return apperror.Internal(err)
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword(
+		[]byte(pw),
+		bcrypt.DefaultCost)
+
+	if err != nil {
+		return apperror.Internal(err)
+	}
+
+	if err := u.repo.ChangePassword(id, string(hashedPassword)); err != nil {
+		return apperror.Internal(err)
+	}
+
+	return nil
 }

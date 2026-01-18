@@ -2,7 +2,6 @@ package mysql
 
 import (
 	"database/sql"
-	"errors"
 
 	"github.com/afandimsr/go-gin-api/internal/domain/user"
 	"github.com/google/uuid"
@@ -59,7 +58,7 @@ func (r *userRepo) FindByID(id string) (user.User, error) {
 	err := r.db.QueryRow("SELECT id, name, email, password FROM users WHERE id = ?", id).Scan(&u.ID, &u.Name, &u.Email, &u.Password)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return u, errors.New("user not found")
+			return u, user.ErrUserNotFound
 		}
 		return u, err
 	}
@@ -126,7 +125,7 @@ func (r *userRepo) FindByEmail(email string) (user.User, error) {
 	err := r.db.QueryRow("SELECT id, name, email, password FROM users WHERE email = ?", email).Scan(&u.ID, &u.Name, &u.Email, &u.Password)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return u, errors.New("user not found")
+			return u, user.ErrUserNotFound
 		}
 		return u, err
 	}
@@ -158,4 +157,9 @@ func (r *userRepo) FindByEmail(email string) (user.User, error) {
 
 	u.Roles = roles
 	return u, nil
+}
+
+func (r *userRepo) ChangePassword(id string, newPassword string) error {
+	_, err := r.db.Exec("UPDATE users SET password = ? WHERE id = ?", newPassword, id)
+	return err
 }

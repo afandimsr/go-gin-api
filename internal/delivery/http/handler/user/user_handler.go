@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/afandimsr/go-gin-api/internal/delivery/http/handler/user/request"
+	"github.com/afandimsr/go-gin-api/internal/delivery/http/helper"
 	"github.com/afandimsr/go-gin-api/internal/delivery/http/response"
 	"github.com/afandimsr/go-gin-api/internal/domain/apperror"
 	"github.com/afandimsr/go-gin-api/internal/domain/user"
@@ -51,9 +53,9 @@ func (h *UserHandler) GetUsers(c *gin.Context) {
 // @Failure      500 {object} response.ErrorSwaggerResponse
 // @Router       /users/{id} [get]
 func (h *UserHandler) GetUser(c *gin.Context) {
-	id := c.Param("id")
-	if id == "" {
-		c.Error(apperror.BadRequest("invalid user id", nil))
+	id, err := helper.ValidateUUIDParamNotFound(c, "id")
+	if err != nil {
+		c.Error(err)
 		return
 	}
 
@@ -107,15 +109,13 @@ func (h *UserHandler) Login(c *gin.Context) {
 	var req user.LoginRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		// c.Error(apperror.BadRequest("invalid request", err))
-		response.Error(c, 400, "INVALID_REQUEST", "Invalid request", err.Error())
+		c.Error(apperror.Validation(err).WithCode(apperror.ValidationError))
 		return
 	}
 
 	token, err := h.usecase.Login(req.Email, req.Password)
 	if err != nil {
-		// c.Error(err)
-		response.Error(c, 400, "INTERNVAL_SERVER_ERROR", "Username/Password tidak valid!", err.Error())
+		c.Error(err)
 		return
 	}
 
@@ -135,9 +135,9 @@ func (h *UserHandler) Login(c *gin.Context) {
 // @Failure      500 {object} response.ErrorSwaggerResponse
 // @Router       /users/{id} [put]
 func (h *UserHandler) UpdateUser(c *gin.Context) {
-	id := c.Param("id")
-	if id == "" {
-		c.Error(apperror.BadRequest("invalid user id", nil))
+	id, err := helper.ValidateUUIDParamNotFound(c, "id")
+	if err != nil {
+		c.Error(err)
 		return
 	}
 
@@ -166,9 +166,9 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 // @Failure      500 {object} response.ErrorSwaggerResponse
 // @Router       /users/{id} [delete]
 func (h *UserHandler) DeleteUser(c *gin.Context) {
-	id := c.Param("id")
-	if id == "" {
-		c.Error(apperror.BadRequest("invalid user id", nil))
+	id, err := helper.ValidateUUIDParamNotFound(c, "id")
+	if err != nil {
+		c.Error(err)
 		return
 	}
 
@@ -178,4 +178,37 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 	}
 
 	response.Success(c, http.StatusOK, "user deleted", nil)
+}
+
+// ChangePassword godoc
+// @Summary      Change user password
+// @Tags         Users
+// @Accept       json
+// @Produce      json
+// @Param        id   path      int  true  "User ID"
+// @Param        body body request.ChangePasswordRequest true "Change password payload"
+// @Success      200 {object} response.SuccessSingleUserResponse
+// @Failure      400 {object} response.ErrorSwaggerResponse
+// @Failure      404 {object} response.ErrorSwaggerResponse
+// @Failure      500 {object} response.ErrorSwaggerResponse
+// @Router       /users/{id}/change-password [put]
+func (h *UserHandler) ChangePassword(c *gin.Context) {
+	id, err := helper.ValidateUUIDParamNotFound(c, "id")
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	var req request.ChangePasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.Error(apperror.Validation(err).WithCode(apperror.ValidationError))
+		return
+	}
+
+	if err := h.usecase.ChangePassword(id, req.NewPassword); err != nil {
+		c.Error(err)
+		return
+	}
+
+	response.Success(c, http.StatusOK, "password changed", nil)
 }

@@ -1,7 +1,7 @@
 package http
 
 import (
-	"github.com/afandimsr/go-gin-api/internal/delivery/http/handler"
+	handler "github.com/afandimsr/go-gin-api/internal/delivery/http/handler/user"
 	"github.com/afandimsr/go-gin-api/internal/delivery/http/middleware"
 	"github.com/gin-gonic/gin"
 )
@@ -27,6 +27,7 @@ func RegisterRoutes(
 		users.GET("", userHandler.GetUsers)
 		users.POST("", userHandler.CreateUser)
 		users.GET("/:id", userHandler.GetUser)
+		users.PUT("/:id/change-password", userHandler.ChangePassword)
 	}
 }
 
