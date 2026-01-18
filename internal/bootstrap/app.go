@@ -6,7 +6,7 @@ import (
 	_ "github.com/afandimsr/go-gin-api/docs"
 	"github.com/afandimsr/go-gin-api/internal/config"
 	"github.com/afandimsr/go-gin-api/internal/database"
-	"github.com/afandimsr/go-gin-api/internal/delivery/http/handler"
+	handler "github.com/afandimsr/go-gin-api/internal/delivery/http/handler/user"
 	"github.com/afandimsr/go-gin-api/internal/delivery/http/middleware"
 	"github.com/afandimsr/go-gin-api/internal/infrastructure/external"
 	userRepo "github.com/afandimsr/go-gin-api/internal/infrastructure/persistent/mysql/repository"

@@ -7,6 +7,7 @@ type UserRepository interface {
 	Save(user User) error
 	Update(user User) error
 	Delete(id string) error
+	ChangePassword(id string, newPassword string) error // New method for changing password
 }
 
 type AuthService interface {
