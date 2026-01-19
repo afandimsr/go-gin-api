@@ -7,11 +7,12 @@ import (
 )
 
 type Config struct {
-	AppName       string
-	AppPort       string
-	AppEnv        string
-	JWTSecret     string
-	ClientAuthURL string
+	AppName            string
+	AppPort            string
+	AppEnv             string
+	JWTSecret          string
+	ClientAuthURL      string
+	CorsAllowedOrigins string
 
 	DB DBConfig
 }
@@ -39,11 +40,12 @@ func Load() *Config {
 	}
 
 	cfg := &Config{
-		AppName:       getEnv("APP_NAME", "go-app"),
-		AppPort:       getEnv("APP_PORT", "8080"),
-		AppEnv:        getEnv("APP_ENV", "development"),
-		JWTSecret:     getEnv("JWT_SECRET", "default-secret"),
-		ClientAuthURL: getEnv("CLIENT_AUTH_URL", ""),
+		AppName:            getEnv("APP_NAME", "go-app"),
+		AppPort:            getEnv("APP_PORT", "8080"),
+		AppEnv:             getEnv("APP_ENV", "development"),
+		JWTSecret:          getEnv("JWT_SECRET", "default-secret"),
+		ClientAuthURL:      getEnv("CLIENT_AUTH_URL", ""),
+		CorsAllowedOrigins: getEnv("CORS_ALLOWED_ORIGINS", "*"),
 
 		DB: DBConfig{
 			Host:     getEnv("DB_HOST", "localhost"),

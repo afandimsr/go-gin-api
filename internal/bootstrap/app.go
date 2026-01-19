@@ -44,18 +44,15 @@ func Run() {
 	}
 
 	r := gin.Default()
-	r.Use(cors.New(cors.Config{
-		AllowOrigins: []string{
-			"http://localhost:3000", // React
-			"http://localhost:5173", // Vite
-			"http://localhost:8080", // Swagger
-		},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
-		AllowCredentials: true,
-	}))
-
-	r.Use(middleware.ErrorHandler())
+	r.Use(
+		cors.New(middleware.Cors(cfg)),
+		middleware.Recovery(),
+		middleware.RequestID(),
+		middleware.SecureHeaders(),
+		middleware.BodyLimit(2<<20), // 2MB
+		middleware.RateLimitPerIP(10, 20),
+		middleware.ErrorHandler(),
+	)
 
 	RegisterRoutes(r, userHandler)
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

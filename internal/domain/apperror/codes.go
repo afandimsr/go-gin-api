@@ -69,6 +69,7 @@ const (
 	SystemTimeout       = "SYSTEM_TIMEOUT"
 	SystemUnavailable   = "SYSTEM_UNAVAILABLE"
 	UnknownError        = "UNKNOWN_ERROR"
+	RateLimitExceeded   = "RATE_LIMIT_EXCEEDED"
 )
 
 // ======================
