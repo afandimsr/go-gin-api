@@ -10,6 +10,7 @@ func RegisterRoutes(
 	r *gin.Engine,
 	userHandler *handler.UserHandler,
 ) {
+
 	api := r.Group("/api/v1")
 
 	// auth routes

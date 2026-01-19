@@ -74,3 +74,6 @@ tmp/
 # Docs files
 # ========================
 docs/*.md
+
+
+.continueignore
