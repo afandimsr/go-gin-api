@@ -3,6 +3,7 @@ package postgres
 import (
 	"database/sql"
 
+	"github.com/afandimsr/go-gin-api/internal/domain/apperror"
 	"github.com/afandimsr/go-gin-api/internal/domain/user"
 	"github.com/google/uuid"
 )
@@ -18,7 +19,7 @@ func NewUserRepo(db *sql.DB) user.UserRepository {
 func (r *userRepo) FindAll(limit, offset int) ([]user.User, error) {
 	rows, err := r.db.Query("SELECT id, name, email FROM users LIMIT $1 OFFSET $2", limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, apperror.HandleDatabaseError(err)
 	}
 	defer rows.Close()
 
@@ -38,7 +39,7 @@ func (r *userRepo) FindByID(id string) (user.User, error) {
 		if err == sql.ErrNoRows {
 			return u, user.ErrUserNotFound
 		}
-		return u, err
+		return u, apperror.HandleDatabaseError(err)
 	}
 	return u, nil
 }
@@ -59,11 +60,11 @@ func (r *userRepo) Save(u user.User) error {
 		}
 		_, err = r.db.Exec("INSERT INTO user_roles(user_id, role_id) VALUES($1, $2)", id, roleID)
 		if err != nil {
-			return err
+			return apperror.HandleDatabaseError(err)
 		}
 	}
 
-	return err
+	return apperror.HandleDatabaseError(err)
 }
 
 func (r *userRepo) Update(u user.User) error {
@@ -80,20 +81,20 @@ func (r *userRepo) Update(u user.User) error {
 		var roleID string
 		err := r.db.QueryRow("SELECT id FROM roles WHERE name = $1", role).Scan(&roleID)
 		if err != nil {
-			return err
+			return apperror.HandleDatabaseError(err)
 		}
 		_, err = r.db.Exec("INSERT INTO user_roles(user_id, role_id) VALUES($1, $2)", u.ID, roleID)
 		if err != nil {
-			return err
+			return apperror.HandleDatabaseError(err)
 		}
 	}
 
-	return err
+	return apperror.HandleDatabaseError(err)
 }
 
 func (r *userRepo) Delete(id string) error {
 	_, err := r.db.Exec("DELETE FROM users WHERE id = $1", id)
-	return err
+	return apperror.HandleDatabaseError(err)
 }
 
 func (r *userRepo) FindByEmail(email string) (user.User, error) {
@@ -112,7 +113,7 @@ func (r *userRepo) FindByEmail(email string) (user.User, error) {
 		if err == sql.ErrNoRows {
 			return u, user.ErrUserNotFound
 		}
-		return u, err
+		return u, apperror.HandleDatabaseError(err)
 	}
 
 	rows, err := r.db.Query(`
@@ -131,13 +132,13 @@ func (r *userRepo) FindByEmail(email string) (user.User, error) {
 	for rows.Next() {
 		var role string
 		if err := rows.Scan(&role); err != nil {
-			return u, err
+			return u, apperror.HandleDatabaseError(err)
 		}
 		roles = append(roles, role)
 	}
 
 	if err := rows.Err(); err != nil {
-		return u, err
+		return u, apperror.HandleDatabaseError(err)
 	}
 
 	u.Roles = roles
@@ -146,5 +147,5 @@ func (r *userRepo) FindByEmail(email string) (user.User, error) {
 
 func (r *userRepo) ChangePassword(id string, newPassword string) error {
 	_, err := r.db.Exec("UPDATE users SET password = $1 WHERE id = $2", newPassword, id)
-	return err
+	return apperror.HandleDatabaseError(err)
 }
