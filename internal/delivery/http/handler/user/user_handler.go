@@ -36,7 +36,7 @@ func (h *UserHandler) GetUsers(c *gin.Context) {
 
 	users, err := h.usecase.GetAll(page, limit)
 	if err != nil {
-		response.Error(c, http.StatusInternalServerError, "USER_FETCH_ERROR", "failed to get users", err.Error())
+		c.Error(err)
 		return
 	}
 

@@ -12,6 +12,13 @@ const (
 	ValidationInvalidUUID  = "VALIDATION_INVALID_UUID"
 )
 
+// HTTP Errors
+const (
+	BadRequestError = "BAD_REQUEST"
+	NotFoundError   = "NOT_FOUND"
+	ConflictError   = "CONFLICT"
+)
+
 // ======================
 // Authentication
 // ======================
@@ -65,11 +72,15 @@ const (
 // System
 // ======================
 const (
-	SystemInternalError = "SYSTEM_INTERNAL_ERROR"
-	SystemTimeout       = "SYSTEM_TIMEOUT"
-	SystemUnavailable   = "SYSTEM_UNAVAILABLE"
-	UnknownError        = "UNKNOWN_ERROR"
-	RateLimitExceeded   = "RATE_LIMIT_EXCEEDED"
+	SystemInternalError     = "INTERNAL_SERVER_ERROR"
+	SystemTimeout           = "SYSTEM_TIMEOUT"
+	SystemUnavailable       = "SYSTEM_UNAVAILABLE"
+	UnknownError            = "UNKNOWN_ERROR"
+	RateLimitExceeded       = "RATE_LIMIT_EXCEEDED"
+	DatabaseError           = "DATABASE_ERROR"
+	DatabaseQueryError      = "DATABASE_QUERY_ERROR"
+	DatabaseConnectionError = "DATABASE_CONNECTION_ERROR"
+	GeneralError            = "GENERAL_ERROR"
 )
 
 // ======================

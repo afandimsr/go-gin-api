@@ -136,7 +136,7 @@ func (u *Usecase) Login(email, password string) (string, error) {
 			).WithCode(apperror.InvalidCredentials)
 		}
 
-		return "", apperror.Internal(err)
+		return "", err
 	}
 
 	// 2. Authenticate

@@ -21,6 +21,11 @@ import (
 
 func Run() {
 	cfg := config.Load()
+	if cfg.AppEnv == "production" {
+		gin.SetMode(gin.ReleaseMode)
+		log.Println("Production mode")
+	}
+
 	jwt.SetSecret(cfg.JWTSecret)
 
 	db, err := database.NewDatabase(cfg.DB)
@@ -51,7 +56,7 @@ func Run() {
 		middleware.SecureHeaders(),
 		middleware.BodyLimit(2<<20), // 2MB
 		middleware.RateLimitPerIP(10, 20),
-		middleware.ErrorHandler(),
+		middleware.ErrorHandler(cfg),
 	)
 
 	RegisterRoutes(r, userHandler)
