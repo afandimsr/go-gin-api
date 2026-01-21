@@ -21,6 +21,9 @@ func (e *AppError) WithCode(code string) *AppError {
 }
 
 func (e *AppError) Unwrap() error {
+	if e == nil {
+		return nil
+	}
 	return e.Err
 }
 

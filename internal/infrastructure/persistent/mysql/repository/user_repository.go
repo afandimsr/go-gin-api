@@ -162,5 +162,9 @@ func (r *userRepo) FindByEmail(email string) (user.User, error) {
 
 func (r *userRepo) ChangePassword(id string, newPassword string) error {
 	_, err := r.db.Exec("UPDATE users SET password = ? WHERE id = ?", newPassword, id)
-	return apperror.HandleDatabaseError(err)
+	if err != nil {
+		return apperror.HandleDatabaseError(err)
+	}
+
+	return nil
 }
