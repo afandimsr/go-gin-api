@@ -15,6 +15,7 @@ type Config struct {
 	CorsAllowedOrigins string
 
 	DB DBConfig
+	S3 map[string]S3Config `mapstructure:"s3"`
 }
 
 type DBConfig struct {
@@ -35,6 +36,7 @@ func Load() *Config {
 	viper.SetConfigType("env")
 	viper.AutomaticEnv()
 
+	//
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatal("Failed to read config:", err)
 	}
@@ -58,6 +60,24 @@ func Load() *Config {
 			MaxOpen:  getEnvInt("DB_MAX_OPEN", 20),
 			MaxIdle:  getEnvInt("DB_MAX_IDLE", 10),
 		},
+		S3: map[string]S3Config{
+			"public": {
+				Endpoint:  getEnv("S3_PUBLIC_ENDPOINT", ""),
+				Region:    getEnv("S3_PUBLIC_REGION", ""),
+				AccessKey: getEnv("S3_PUBLIC_ACCESS_KEY", ""),
+				SecretKey: getEnv("S3_PUBLIC_SECRET_KEY", ""),
+				Bucket:    getEnv("S3_PUBLIC_BUCKET", ""),
+				UseSSL:    getEnvBool("S3_PUBLIC_USE_SSL", false),
+			},
+			// "private": {
+			// 	Endpoint:  getEnv("S3_PRIVATE_ENDPOINT", ""),
+			// 	Region:    getEnv("S3_PRIVATE_REGION", ""),
+			// 	AccessKey: getEnv("S3_PRIVATE_ACCESS_KEY", ""),
+			// 	SecretKey: getEnv("S3_PRIVATE_SECRET_KEY", ""),
+			// 	Bucket:    getEnv("S3_PRIVATE_BUCKET", ""),
+			// 	UseSSL:    getEnvBool("S3_PRIVATE_USE_SSL", false),
+			// },
+		},
 	}
 
 	validate(cfg)
@@ -73,6 +93,13 @@ func getEnv(key string, defaultVal string) string {
 
 func getEnvInt(key string, defaultVal int) int {
 	if val := viper.GetInt(key); val != 0 {
+		return val
+	}
+	return defaultVal
+}
+
+func getEnvBool(key string, defaultVal bool) bool {
+	if val := viper.GetBool(key); val != false {
 		return val
 	}
 	return defaultVal

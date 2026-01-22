@@ -6,6 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(r *gin.Engine, userHandler *handler.UserHandler) {
+func RegisterRoutes(
+	r *gin.Engine,
+	userHandler *handler.UserHandler) {
 	httpDelivery.RegisterRoutes(r, userHandler)
 }
