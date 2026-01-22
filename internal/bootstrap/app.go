@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"context"
 	"log"
 
 	_ "github.com/afandimsr/go-gin-api/docs"
@@ -11,6 +12,7 @@ import (
 	"github.com/afandimsr/go-gin-api/internal/infrastructure/external"
 	userRepo "github.com/afandimsr/go-gin-api/internal/infrastructure/persistent/mysql/repository"
 	userPostgresRepo "github.com/afandimsr/go-gin-api/internal/infrastructure/persistent/postgres/repository"
+	s3infra "github.com/afandimsr/go-gin-api/internal/infrastructure/storage/s3"
 	"github.com/afandimsr/go-gin-api/internal/pkg/jwt"
 	userUC "github.com/afandimsr/go-gin-api/internal/usecase/user"
 	"github.com/gin-contrib/cors"
@@ -20,18 +22,48 @@ import (
 )
 
 func Run() {
+	// load config
 	cfg := config.Load()
 	if cfg.AppEnv == "production" {
 		gin.SetMode(gin.ReleaseMode)
 		log.Println("Production mode")
 	}
 
+	// set jwt secret
 	jwt.SetSecret(cfg.JWTSecret)
 
+	// initialize database
 	db, err := database.NewDatabase(cfg.DB)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// initialize storage service
+	ctx := context.Background()
+
+	publicS3, err := s3infra.New(ctx, cfg.S3["public"])
+	if err != nil {
+		log.Fatal("failed init public s3:", err)
+	}
+
+	// privateS3, err := s3infra.New(ctx, cfg.S3["private"])
+	// if err != nil {
+	// 	log.Fatal("failed init private s3:", err)
+	// }
+
+	publicStorage := s3infra.NewUploader(
+		publicS3,
+		cfg.S3["public"].Bucket,
+	)
+
+	// privateStorage := storageUC.New(
+	// 	privateS3,
+	// 	cfg.S3["private"].Bucket,
+	// )
+
+	// inject to usecase layer
+	_ = publicStorage
+	// _ = privateStorage
 
 	authClient := external.NewAuthClient(cfg.ClientAuthURL)
 	var userHandler *handler.UserHandler
