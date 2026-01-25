@@ -9,6 +9,7 @@ import (
 	"github.com/afandimsr/go-gin-api/internal/database"
 	handler "github.com/afandimsr/go-gin-api/internal/delivery/http/handler/user"
 	"github.com/afandimsr/go-gin-api/internal/delivery/http/middleware"
+	"github.com/afandimsr/go-gin-api/internal/infrastructure/apm"
 	"github.com/afandimsr/go-gin-api/internal/infrastructure/external"
 	userRepo "github.com/afandimsr/go-gin-api/internal/infrastructure/persistent/mysql/repository"
 	userPostgresRepo "github.com/afandimsr/go-gin-api/internal/infrastructure/persistent/postgres/repository"
@@ -80,6 +81,9 @@ func Run() {
 		log.Fatal("Unsupported database driver: " + cfg.DB.Driver)
 	}
 
+	// initialize APM
+	apm.Init(cfg)
+
 	r := gin.Default()
 	r.Use(
 		cors.New(middleware.Cors(cfg)),
@@ -88,6 +92,7 @@ func Run() {
 		middleware.SecureHeaders(),
 		middleware.BodyLimit(2<<20), // 2MB
 		middleware.RateLimitPerIP(10, 20),
+		apm.GinMiddleware(), // Gin Elastic APM
 		middleware.ErrorHandler(cfg),
 	)
 
