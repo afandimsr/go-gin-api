@@ -14,8 +14,9 @@ type Config struct {
 	ClientAuthURL      string
 	CorsAllowedOrigins string
 
-	DB DBConfig
-	S3 map[string]S3Config `mapstructure:"s3"`
+	DB         DBConfig
+	S3         map[string]S3Config `mapstructure:"s3"`
+	ElasticApm ElasticApmConfig
 }
 
 type DBConfig struct {
@@ -28,6 +29,15 @@ type DBConfig struct {
 	SSLMode  string
 	MaxOpen  int
 	MaxIdle  int
+}
+
+type ElasticApmConfig struct {
+	ServerURL        string
+	ServiceName      string
+	Environment      string
+	SecretToken      string
+	VerifyServerCert bool
+	ServiceVersion   string
 }
 
 func Load() *Config {
@@ -77,6 +87,14 @@ func Load() *Config {
 			// 	Bucket:    getEnv("S3_PRIVATE_BUCKET", ""),
 			// 	UseSSL:    getEnvBool("S3_PRIVATE_USE_SSL", false),
 			// },
+		},
+		ElasticApm: ElasticApmConfig{
+			ServerURL:        getEnv("ELASTIC_APM_SERVER_URL", ""),
+			ServiceName:      getEnv("ELASTIC_APM_SERVICE_NAME", "go-app-service"),
+			ServiceVersion:   getEnv("ELASTIC_APM_SERVICE_VERSION", "1.0.0"),
+			Environment:      getEnv("ELASTIC_APM_ENVIRONMENT", "development"),
+			SecretToken:      getEnv("ELASTIC_APM_SECRET_TOKEN", ""),
+			VerifyServerCert: getEnvBool("ELASTIC_APM_VERIFY_SERVER_CERT", false),
 		},
 	}
 
