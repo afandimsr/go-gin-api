@@ -63,7 +63,7 @@ func Load() *Config {
 	}
 
 	cfg := &Config{
-		AppVersion:         "2.0.0",
+		AppVersion:         "2.1.0",
 		AppName:            getEnv("APP_NAME", "go-app"),
 		AppPort:            getEnv("APP_PORT", "8080"),
 		AppEnv:             getEnv("APP_ENV", "development"),
