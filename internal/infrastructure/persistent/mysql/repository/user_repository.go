@@ -17,7 +17,7 @@ func NewUserRepo(db *sql.DB) user.UserRepository {
 }
 
 func (r *userRepo) FindAll(limit, offset int) ([]user.User, error) {
-	rows, err := r.db.Query("SELECT id, name, email, is_active FROM users LIMIT ? OFFSET ?", limit, offset)
+	rows, err := r.db.Query("SELECT id, COALESCE(keycloak_id, ''), name, email, is_active FROM users LIMIT ? OFFSET ?", limit, offset)
 	if err != nil {
 		return nil, apperror.HandleDatabaseError(err)
 	}
@@ -26,7 +26,7 @@ func (r *userRepo) FindAll(limit, offset int) ([]user.User, error) {
 	var users []user.User
 	for rows.Next() {
 		var u user.User
-		rows.Scan(&u.ID, &u.Name, &u.Email, &u.IsActive)
+		rows.Scan(&u.ID, &u.KeycloakID, &u.Name, &u.Email, &u.IsActive)
 		//fetch roles for user
 		roleRows, err := r.db.Query(`
 			SELECT r.name
@@ -56,7 +56,7 @@ func (r *userRepo) FindAll(limit, offset int) ([]user.User, error) {
 
 func (r *userRepo) FindByID(id string) (user.User, error) {
 	var u user.User
-	err := r.db.QueryRow("SELECT id, name, email, password FROM users WHERE id = ?", id).Scan(&u.ID, &u.Name, &u.Email, &u.Password)
+	err := r.db.QueryRow("SELECT id, COALESCE(keycloak_id, ''), name, email, password FROM users WHERE id = ?", id).Scan(&u.ID, &u.KeycloakID, &u.Name, &u.Email, &u.Password)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return u, user.ErrUserNotFound
@@ -69,8 +69,8 @@ func (r *userRepo) FindByID(id string) (user.User, error) {
 func (r *userRepo) Save(u user.User) error {
 	id := uuid.New().String()
 	_, err := r.db.Exec(
-		"INSERT INTO users(id, name, email, password) VALUES(?, ?, ?, ?)",
-		id, u.Name, u.Email, u.Password,
+		"INSERT INTO users(id, keycloak_id, name, email, password) VALUES(?, ?, ?, ?, ?)",
+		id, u.KeycloakID, u.Name, u.Email, u.Password,
 	)
 
 	for _, role := range u.Roles {
@@ -91,8 +91,8 @@ func (r *userRepo) Save(u user.User) error {
 func (r *userRepo) Update(u user.User) error {
 
 	_, err := r.db.Exec(
-		"UPDATE users SET name = ?, email = ?, password = ? WHERE id = ?",
-		u.Name, u.Email, u.Password, u.ID,
+		"UPDATE users SET keycloak_id = ?, name = ?, email = ?, password = ? WHERE id = ?",
+		u.KeycloakID, u.Name, u.Email, u.Password, u.ID,
 	)
 
 	// Update roles
@@ -123,7 +123,7 @@ func (r *userRepo) Delete(id string) error {
 
 func (r *userRepo) FindByEmail(email string) (user.User, error) {
 	var u user.User
-	err := r.db.QueryRow("SELECT id, name, email, password FROM users WHERE email = ?", email).Scan(&u.ID, &u.Name, &u.Email, &u.Password)
+	err := r.db.QueryRow("SELECT id, COALESCE(keycloak_id, ''), name, email, password FROM users WHERE email = ?", email).Scan(&u.ID, &u.KeycloakID, &u.Name, &u.Email, &u.Password)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return u, user.ErrUserNotFound
@@ -167,4 +167,44 @@ func (r *userRepo) ChangePassword(id string, newPassword string) error {
 	}
 
 	return nil
+}
+
+func (r *userRepo) FindByKeycloakID(keycloakID string) (user.User, error) {
+	var u user.User
+	err := r.db.QueryRow("SELECT id, COALESCE(keycloak_id, ''), name, email, password FROM users WHERE keycloak_id = ?", keycloakID).Scan(&u.ID, &u.KeycloakID, &u.Name, &u.Email, &u.Password)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return u, user.ErrUserNotFound
+		}
+		return u, apperror.HandleDatabaseError(err)
+	}
+
+	// fetch roles
+	roleRows, err := r.db.Query(`
+		SELECT r.name
+		FROM roles r
+		JOIN user_roles ur ON ur.role_id = r.id
+		WHERE ur.user_id = ?
+	`, u.ID)
+	if err != nil {
+		return u, apperror.HandleDatabaseError(err)
+	}
+	defer roleRows.Close()
+
+	var roles []string
+	for roleRows.Next() {
+		var role string
+		if err := roleRows.Scan(&role); err != nil {
+			return u, err
+		}
+		roles = append(roles, role)
+	}
+	u.Roles = roles
+
+	return u, nil
+}
+
+func (r *userRepo) UpdateKeycloakID(id string, keycloakID string) error {
+	_, err := r.db.Exec("UPDATE users SET keycloak_id = ? WHERE id = ?", keycloakID, id)
+	return apperror.HandleDatabaseError(err)
 }
