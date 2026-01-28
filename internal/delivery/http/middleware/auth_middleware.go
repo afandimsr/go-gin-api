@@ -4,11 +4,12 @@ import (
 	"strings"
 
 	"github.com/afandimsr/go-gin-api/internal/domain/apperror"
+	"github.com/afandimsr/go-gin-api/internal/domain/user"
 	"github.com/afandimsr/go-gin-api/internal/pkg/jwt"
 	"github.com/gin-gonic/gin"
 )
 
-func AuthMiddleware() gin.HandlerFunc {
+func AuthMiddleware(ks user.KeycloakService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -29,6 +30,15 @@ func AuthMiddleware() gin.HandlerFunc {
 			c.Error(apperror.Unauthorized("invalid or expired token", err))
 			c.Abort()
 			return
+		}
+
+		// Real-time Keycloak Session Check
+		if claims.KeycloakToken != "" && ks != nil {
+			if err := ks.VerifyToken(claims.KeycloakToken); err != nil {
+				c.Error(apperror.Unauthorized("sessions revoked in keycloak", err))
+				c.Abort()
+				return
+			}
 		}
 
 		c.Set("userID", claims.UserID)

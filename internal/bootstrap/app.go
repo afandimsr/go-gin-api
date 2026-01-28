@@ -2,6 +2,8 @@ package bootstrap
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"log"
 
 	_ "github.com/afandimsr/go-gin-api/docs"
@@ -15,9 +17,11 @@ import (
 	userPostgresRepo "github.com/afandimsr/go-gin-api/internal/infrastructure/persistent/postgres/repository"
 	s3infra "github.com/afandimsr/go-gin-api/internal/infrastructure/storage/s3"
 	"github.com/afandimsr/go-gin-api/internal/pkg/jwt"
+	"github.com/afandimsr/go-gin-api/internal/pkg/oidc"
 	userUC "github.com/afandimsr/go-gin-api/internal/usecase/user"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
@@ -67,16 +71,30 @@ func Run() {
 	// _ = privateStorage
 
 	authClient := external.NewAuthClient(cfg.ClientAuthURL)
+	keycloakService := external.NewKeycloakService(cfg.Keycloak)
+
+	// OIDC Provider (optional depending on config)
+	var oidcProvider *oidc.OIDCProvider
+	if cfg.Keycloak.URL != "" {
+		redirectURL := fmt.Sprintf("http://localhost:%s/api/v1/auth/callback", cfg.AppPort)
+		op, err := oidc.NewOIDCProvider(context.Background(), cfg.Keycloak, redirectURL)
+		if err != nil {
+			log.Printf("Warning: failed to initialize OIDC provider: %v", err)
+		} else {
+			oidcProvider = op
+		}
+	}
+
 	var userHandler *handler.UserHandler
 	switch cfg.DB.Driver {
 	case "mysql":
 		userRepository := userRepo.NewUserRepo(db)
-		userUsecase := userUC.New(userRepository, authClient)
-		userHandler = handler.New(userUsecase)
+		userUsecase := userUC.New(userRepository, authClient, keycloakService)
+		userHandler = handler.New(userUsecase, oidcProvider)
 	case "postgres":
 		userRepository := userPostgresRepo.NewUserRepo(db)
-		userUsecase := userUC.New(userRepository, authClient)
-		userHandler = handler.New(userUsecase)
+		userUsecase := userUC.New(userRepository, authClient, keycloakService)
+		userHandler = handler.New(userUsecase, oidcProvider)
 	default:
 		log.Fatal("Unsupported database driver: " + cfg.DB.Driver)
 	}
@@ -96,9 +114,27 @@ func Run() {
 		middleware.ErrorHandler(cfg),
 	)
 
-	RegisterRoutes(r, userHandler)
+	RegisterRoutes(r, userHandler, keycloakService)
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	// Ensure roles exist
+	seedRoles(db)
 
 	log.Println("Running on port", cfg.AppPort)
 	r.Run(":" + cfg.AppPort)
+}
+
+func seedRoles(db *sql.DB) {
+	roles := []string{"USER", "ADMIN"}
+	for _, role := range roles {
+		var id string
+		err := db.QueryRow("SELECT id FROM roles WHERE name = ?", role).Scan(&id)
+		if err != nil {
+			log.Printf("[Seed] Role %s missing, creating...", role)
+			_, err = db.Exec("INSERT INTO roles (id, name) VALUES (?, ?)", uuid.New().String(), role)
+			if err != nil {
+				log.Printf("[Seed] Failed to create role %s: %v", role, err)
+			}
+		}
+	}
 }

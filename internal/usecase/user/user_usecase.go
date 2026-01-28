@@ -2,6 +2,7 @@ package user
 
 import (
 	"errors"
+	"log"
 	"strings"
 
 	"github.com/afandimsr/go-gin-api/internal/domain/apperror"
@@ -13,14 +14,16 @@ import (
 )
 
 type Usecase struct {
-	repo        user.UserRepository
-	authService user.AuthService
+	repo            user.UserRepository
+	authService     user.AuthService
+	keycloakService user.KeycloakService
 }
 
-func New(repo user.UserRepository, authService user.AuthService) *Usecase {
+func New(repo user.UserRepository, authService user.AuthService, ks user.KeycloakService) *Usecase {
 	return &Usecase{
-		repo:        repo,
-		authService: authService,
+		repo:            repo,
+		authService:     authService,
+		keycloakService: ks,
 	}
 }
 
@@ -160,7 +163,18 @@ func (u *Usecase) Login(email, password string) (string, error) {
 		}
 	}
 
-	// 3. Generate Token
+	// 3. Lazy Migration to Keycloak
+	if existingUser.KeycloakID == "" && u.keycloakService != nil {
+		// This user is not yet in Keycloak, migrate them
+		keycloakID, err := u.keycloakService.CreateUser(existingUser.Email, existingUser.Name, password, existingUser.Roles)
+		if err == nil {
+			// Update local user with Keycloak ID
+			_ = u.repo.UpdateKeycloakID(existingUser.ID, keycloakID)
+		}
+		// We don't block login if Keycloak migration fails, just log it or handle as needed
+	}
+
+	// 4. Generate Token
 	token, err := jwt.GenerateToken(existingUser.ID, existingUser.Email, existingUser.Name, existingUser.Roles)
 	if err != nil {
 		return "", apperror.Internal(err)
@@ -214,4 +228,66 @@ func (u *Usecase) ChangePassword(id string, newPassword string) error {
 	}
 
 	return nil
+}
+
+// LoginWithOIDC handles user login/registration from OIDC ID Token claims
+func (u *Usecase) LoginWithOIDC(claims map[string]interface{}, keycloakToken string) (string, error) {
+	email, _ := claims["email"].(string)
+	sub, _ := claims["sub"].(string)
+	name, _ := claims["name"].(string)
+
+	log.Printf("[Usecase] LoginWithOIDC: email=%s, sub=%s, name=%s", email, sub, name)
+
+	if email == "" || sub == "" {
+		return "", apperror.Unauthorized("invalid token claims", nil)
+	}
+
+	// 1. Try to find user by Keycloak ID (sub)
+	existingUser, err := u.repo.FindByKeycloakID(sub)
+	if err != nil {
+		if errors.Is(err, user.ErrUserNotFound) {
+			log.Printf("[Usecase] User with Keycloak ID %s not found. Checking email...", sub)
+			// 2. Fallback: try to find by email (for existing users not yet linked)
+			existingUser, err = u.repo.FindByEmail(email)
+			if err == nil {
+				log.Printf("[Usecase] Found existing user by email %s. Linking to Keycloak ID %s", email, sub)
+				// Link existing user to Keycloak
+				_ = u.repo.UpdateKeycloakID(existingUser.ID, sub)
+			} else if errors.Is(err, user.ErrUserNotFound) {
+				log.Printf("[Usecase] No existing user found. Registering new user...")
+				// 3. Register new user from OIDC
+				newUser := user.User{
+					KeycloakID: sub,
+					Email:      email,
+					Name:       name,
+					Roles:      []string{"USER"}, // Default role
+					IsActive:   true,
+				}
+				if err := u.repo.Save(newUser); err != nil {
+					log.Printf("[Usecase] Failed to save new user: %v", err)
+					return "", apperror.Internal(err)
+				}
+				log.Printf("[Usecase] New user saved successfully")
+				// Re-fetch to get the generated ID
+				existingUser, _ = u.repo.FindByEmail(email)
+			} else {
+				log.Printf("[Usecase] FindByEmail failed: %v", err)
+				return "", err
+			}
+		} else {
+			log.Printf("[Usecase] FindByKeycloakID failed: %v", err)
+			return "", err
+		}
+	}
+
+	log.Printf("[Usecase] Generating token for user ID %s", existingUser.ID)
+
+	// 4. Generate local token with Keycloak Access Token
+	token, err := jwt.GenerateToken(existingUser.ID, existingUser.Email, existingUser.Name, existingUser.Roles, keycloakToken)
+	if err != nil {
+		log.Printf("[Usecase] Token generation failed: %v", err)
+		return "", apperror.Internal(err)
+	}
+
+	return token, nil
 }

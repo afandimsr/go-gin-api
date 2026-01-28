@@ -16,6 +16,15 @@ type MockUserRepository struct {
 	mock.Mock
 }
 
+type MockKeycloakService struct {
+	mock.Mock
+}
+
+func (m *MockKeycloakService) CreateUser(email, name, password string, roles []string) (string, error) {
+	args := m.Called(email, name, password, roles)
+	return args.String(0), args.Error(1)
+}
+
 func (m *MockUserRepository) FindAll(limit, offset int) ([]user.User, error) {
 	args := m.Called(limit, offset)
 	return args.Get(0).([]user.User), args.Error(1)
@@ -46,6 +55,16 @@ func (m *MockUserRepository) Delete(id string) error {
 	return args.Error(0)
 }
 
+func (m *MockUserRepository) FindByKeycloakID(keycloakID string) (user.User, error) {
+	args := m.Called(keycloakID)
+	return args.Get(0).(user.User), args.Error(1)
+}
+
+func (m *MockUserRepository) UpdateKeycloakID(id string, keycloakID string) error {
+	args := m.Called(id, keycloakID)
+	return args.Error(0)
+}
+
 func (m *MockUserRepository) ChangePassword(id string, newPassword string) error {
 	args := m.Called(id, newPassword)
 	return args.Error(0)
@@ -53,7 +72,7 @@ func (m *MockUserRepository) ChangePassword(id string, newPassword string) error
 
 func TestGetByID(t *testing.T) {
 	mockRepo := new(MockUserRepository)
-	usecase := uc.New(mockRepo, nil)
+	usecase := uc.New(mockRepo, nil, nil)
 
 	mockUser := user.User{ID: "ef6d1df7-f85c-426c-9c12-6d58a1fc2633", Name: "Test User", Email: "test@example.com"}
 
@@ -81,7 +100,7 @@ func TestGetByID(t *testing.T) {
 
 func TestCreate(t *testing.T) {
 	mockRepo := new(MockUserRepository)
-	usecase := uc.New(mockRepo, nil)
+	usecase := uc.New(mockRepo, nil, nil)
 
 	t.Run("Success", func(t *testing.T) {
 		newUser := user.User{Name: "New User", Email: "new@example.com", Password: "password123"}
@@ -101,7 +120,7 @@ func TestCreate(t *testing.T) {
 
 func TestChangePassword(t *testing.T) {
 	mockRepo := new(MockUserRepository)
-	usecase := uc.New(mockRepo, nil)
+	usecase := uc.New(mockRepo, nil, nil)
 	t.Run("Success", func(t *testing.T) {
 		userID := "6906ab46-7eda-4df8-8ad4-f9b46e39cb32"
 		newPassword := "Newpassword123@"
@@ -145,7 +164,7 @@ func TestChangePassword(t *testing.T) {
 
 	t.Run("WeakPassword", func(t *testing.T) {
 		mockRepo := new(MockUserRepository)
-		usecase := uc.New(mockRepo, nil)
+		usecase := uc.New(mockRepo, nil, nil)
 
 		// ✅ mock FindByID (WAJIB)
 		mockRepo.
@@ -164,7 +183,7 @@ func TestChangePassword(t *testing.T) {
 
 	t.Run("ShortPassword", func(t *testing.T) {
 		mockRepo := new(MockUserRepository)
-		usecase := uc.New(mockRepo, nil)
+		usecase := uc.New(mockRepo, nil, nil)
 
 		// ✅ mock FindByID (WAJIB)
 		mockRepo.
@@ -185,7 +204,7 @@ func TestChangePassword(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	mockRepo := new(MockUserRepository)
-	usecase := uc.New(mockRepo, nil)
+	usecase := uc.New(mockRepo, nil, nil)
 	t.Run("Success", func(t *testing.T) {
 		userID := "6906ab46-7eda-4df8-8ad4-f9b46e39cb32"
 		// ✅ mock FindByID (WAJIB)
@@ -220,7 +239,7 @@ func TestDelete(t *testing.T) {
 
 func TestUpdate(t *testing.T) {
 	mockRepo := new(MockUserRepository)
-	usecase := uc.New(mockRepo, nil)
+	usecase := uc.New(mockRepo, nil, nil)
 	t.Run("Success", func(t *testing.T) {
 		userID := "6906ab46-7eda-4df8-8ad4-f9b46e39cb32"
 		updatedUser := user.User{Name: "Updated User", Email: "updated@example.com", Roles: []string{"USER"}, Password: "newpassword123"}
@@ -258,7 +277,7 @@ func TestUpdate(t *testing.T) {
 
 func TestGetAll(t *testing.T) {
 	mockRepo := new(MockUserRepository)
-	usecase := uc.New(mockRepo, nil)
+	usecase := uc.New(mockRepo, nil, nil)
 	t.Run("Success", func(t *testing.T) {
 		mockUsers := []user.User{
 			{ID: "1", Name: "User One", Email: "user1@example.com"},

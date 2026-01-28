@@ -15,6 +15,7 @@ type Config struct {
 	CorsAllowedOrigins string
 
 	DB         DBConfig
+	Keycloak   KeycloakConfig
 	S3         map[string]S3Config `mapstructure:"s3"`
 	ElasticApm ElasticApmConfig
 }
@@ -29,6 +30,15 @@ type DBConfig struct {
 	SSLMode  string
 	MaxOpen  int
 	MaxIdle  int
+}
+
+type KeycloakConfig struct {
+	URL           string
+	Realm         string
+	ClientID      string
+	ClientSecret  string
+	AdminUser     string
+	AdminPassword string
 }
 
 type ElasticApmConfig struct {
@@ -69,6 +79,14 @@ func Load() *Config {
 			SSLMode:  getEnv("DB_SSL_MODE", ""),
 			MaxOpen:  getEnvInt("DB_MAX_OPEN", 20),
 			MaxIdle:  getEnvInt("DB_MAX_IDLE", 10),
+		},
+		Keycloak: KeycloakConfig{
+			URL:           getEnv("KEYCLOAK_URL", ""),
+			Realm:         getEnv("KEYCLOAK_REALM", ""),
+			ClientID:      getEnv("KEYCLOAK_CLIENT_ID", ""),
+			ClientSecret:  getEnv("KEYCLOAK_CLIENT_SECRET", ""),
+			AdminUser:     getEnv("KEYCLOAK_ADMIN_USER", ""),
+			AdminPassword: getEnv("KEYCLOAK_ADMIN_PASSWORD", ""),
 		},
 		S3: map[string]S3Config{
 			"public": {

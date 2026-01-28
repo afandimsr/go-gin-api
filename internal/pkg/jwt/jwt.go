@@ -14,19 +14,26 @@ func SetSecret(secret string) {
 }
 
 type Claims struct {
-	UserID string   `json:"user_id"`
-	Email  string   `json:"email"`
-	Name   string   `json:"name,omitempty"`
-	Roles  []string `json:"roles,omitempty"`
+	UserID        string   `json:"user_id"`
+	Email         string   `json:"email"`
+	Name          string   `json:"name,omitempty"`
+	Roles         []string `json:"roles,omitempty"`
+	KeycloakToken string   `json:"keycloak_token,omitempty"`
 	jwt.RegisteredClaims
 }
 
-func GenerateToken(userID string, email string, name string, roles []string) (string, error) {
+func GenerateToken(userID string, email string, name string, roles []string, keycloakToken ...string) (string, error) {
+	var kcToken string
+	if len(keycloakToken) > 0 {
+		kcToken = keycloakToken[0]
+	}
+
 	claims := &Claims{
-		UserID: userID,
-		Email:  email,
-		Name:   name,
-		Roles:  roles,
+		UserID:        userID,
+		Email:         email,
+		Name:          name,
+		Roles:         roles,
+		KeycloakToken: kcToken,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
