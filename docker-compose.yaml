@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  # --- Service Backend ---
+  go-gin-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: go-gin-api
+    ports:
+      - "8182:8182"  # Mapping Port Host:Container (Host 8182 sesuai env frontend)
+    env_file:
+      - .env
+    networks:
+      - my_develop_network
+    restart: always
+
+# ... (Definisi networks sama seperti sebelumnya)
+networks:
+  my_develop_network:
+    external: true
